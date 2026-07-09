@@ -45,7 +45,9 @@ class TvTimeGdprParser {
     };
 
     if (!sourceFilesPresent[followedShowsFile]!) {
-      errors.add('$followedShowsFile introuvable — impossible de lister les séries.');
+      errors.add(
+        '$followedShowsFile introuvable — impossible de lister les séries.',
+      );
     }
 
     if (!sourceFilesPresent[userShowDataFile]!) {
@@ -72,7 +74,9 @@ class TvTimeGdprParser {
       legacyFilesPresent.add(legacySeenEpisodeFile);
     }
 
-    final episodesSeenByShowId = _parseEpisodesSeenCounts(files[userShowDataFile]);
+    final episodesSeenByShowId = _parseEpisodesSeenCounts(
+      files[userShowDataFile],
+    );
     final showParse = _parseShows(
       files[followedShowsFile],
       episodesSeenByShowId,
@@ -217,10 +221,12 @@ class TvTimeGdprParser {
         return a.episodeNumber.compareTo(b.episodeNumber);
       });
 
-    final withoutWatchDate =
-        episodes.where((episode) => episode.watchedAt == null).length;
-    final withoutShowId =
-        episodes.where((episode) => episode.showId.isEmpty).length;
+    final withoutWatchDate = episodes
+        .where((episode) => episode.watchedAt == null)
+        .length;
+    final withoutShowId = episodes
+        .where((episode) => episode.showId.isEmpty)
+        .length;
 
     return _EpisodeParseResult(
       episodes: episodes,
@@ -288,7 +294,9 @@ class TvTimeGdprParser {
     );
   }
 
-  static TvTimeWatchedEpisode? _episodeFromRewatchedRow(Map<String, String> row) {
+  static TvTimeWatchedEpisode? _episodeFromRewatchedRow(
+    Map<String, String> row,
+  ) {
     final showName = row['tv_show_name'];
     final season = int.tryParse(row['episode_season_number'] ?? '');
     final episodeNumber = int.tryParse(row['episode_number'] ?? '');
@@ -320,8 +328,10 @@ class TvTimeGdprParser {
   static DateTime? _parseUnixSeconds(String value) {
     final seconds = int.tryParse(value);
     if (seconds == null) return null;
-    return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true)
-        .toLocal();
+    return DateTime.fromMillisecondsSinceEpoch(
+      seconds * 1000,
+      isUtc: true,
+    ).toLocal();
   }
 
   static List<Map<String, String>> _parseCsvRows(String csv) {

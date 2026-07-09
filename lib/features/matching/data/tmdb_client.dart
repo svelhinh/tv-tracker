@@ -6,12 +6,9 @@ import '../../../core/config/tmdb_config.dart';
 import '../domain/tmdb_show_search_result.dart';
 
 class TmdbClient {
-  TmdbClient({
-    http.Client? httpClient,
-    String? apiKey,
-    this.language = 'fr-FR',
-  })  : _httpClient = httpClient ?? http.Client(),
-        _apiKey = apiKey ?? tmdbApiKey;
+  TmdbClient({http.Client? httpClient, String? apiKey, this.language = 'fr-FR'})
+    : _httpClient = httpClient ?? http.Client(),
+      _apiKey = apiKey ?? tmdbApiKey;
 
   final http.Client _httpClient;
   final String _apiKey;

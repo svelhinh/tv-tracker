@@ -79,9 +79,7 @@ void main() {
 
       final report = await matcher.matchShows(
         const [TvTimeShow(tvTimeId: '2', name: 'Armor Wars')],
-        overrides: {
-          '2': ShowMatchOverride.ignored(tvTimeShowId: '2'),
-        },
+        overrides: {'2': ShowMatchOverride.ignored(tvTimeShowId: '2')},
       );
 
       expect(report.results.first.confidence, ShowMatchConfidence.ignored);

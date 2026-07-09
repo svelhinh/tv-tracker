@@ -16,10 +16,7 @@ class ShowMatchOverrideStore {
     return decoded.map(
       (tvTimeShowId, value) => MapEntry(
         tvTimeShowId,
-        ShowMatchOverride.fromJson(
-          tvTimeShowId,
-          value as Map<String, dynamic>,
-        ),
+        ShowMatchOverride.fromJson(tvTimeShowId, value as Map<String, dynamic>),
       ),
     );
   }

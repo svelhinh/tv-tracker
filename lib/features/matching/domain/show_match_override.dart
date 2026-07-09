@@ -1,7 +1,4 @@
-enum ShowMatchOverrideKind {
-  matched,
-  ignored,
-}
+enum ShowMatchOverrideKind { matched, ignored }
 
 class ShowMatchOverride {
   const ShowMatchOverride({
@@ -10,6 +7,7 @@ class ShowMatchOverride {
     this.tmdbId,
     this.tmdbName,
     this.tmdbFirstAirDate,
+    this.tmdbPosterPath,
   });
 
   final String tvTimeShowId;
@@ -17,23 +15,29 @@ class ShowMatchOverride {
   final int? tmdbId;
   final String? tmdbName;
   final String? tmdbFirstAirDate;
+  final String? tmdbPosterPath;
 
   bool get isIgnored => kind == ShowMatchOverrideKind.ignored;
 
   Map<String, dynamic> toJson() => {
-        'kind': kind.name,
-        'tmdbId': tmdbId,
-        'tmdbName': tmdbName,
-        'tmdbFirstAirDate': tmdbFirstAirDate,
-      };
+    'kind': kind.name,
+    'tmdbId': tmdbId,
+    'tmdbName': tmdbName,
+    'tmdbFirstAirDate': tmdbFirstAirDate,
+    'tmdbPosterPath': tmdbPosterPath,
+  };
 
-  factory ShowMatchOverride.fromJson(String tvTimeShowId, Map<String, dynamic> json) {
+  factory ShowMatchOverride.fromJson(
+    String tvTimeShowId,
+    Map<String, dynamic> json,
+  ) {
     return ShowMatchOverride(
       tvTimeShowId: tvTimeShowId,
       kind: ShowMatchOverrideKind.values.byName(json['kind'] as String),
       tmdbId: json['tmdbId'] as int?,
       tmdbName: json['tmdbName'] as String?,
       tmdbFirstAirDate: json['tmdbFirstAirDate'] as String?,
+      tmdbPosterPath: json['tmdbPosterPath'] as String?,
     );
   }
 
@@ -42,6 +46,7 @@ class ShowMatchOverride {
     required int tmdbId,
     required String tmdbName,
     String? tmdbFirstAirDate,
+    String? tmdbPosterPath,
   }) {
     return ShowMatchOverride(
       tvTimeShowId: tvTimeShowId,
@@ -49,6 +54,7 @@ class ShowMatchOverride {
       tmdbId: tmdbId,
       tmdbName: tmdbName,
       tmdbFirstAirDate: tmdbFirstAirDate,
+      tmdbPosterPath: tmdbPosterPath,
     );
   }
 

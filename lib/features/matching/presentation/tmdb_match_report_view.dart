@@ -15,13 +15,13 @@ class TmdbMatchReportView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Matching TMDB',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text('Matching TMDB', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         _StatRow('Échantillon testé', '${report.sampleSize} séries'),
-        _StatRow('Matchs confiants', '${report.confidentCount} ($confidentPercent%)'),
+        _StatRow(
+          'Matchs confiants',
+          '${report.confidentCount} ($confidentPercent%)',
+        ),
         if (report.manualCount > 0)
           _StatRow('Choix manuels', '${report.manualCount}'),
         if (report.ignoredCount > 0)
@@ -41,10 +41,7 @@ class TmdbMatchReportView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          'Erreurs typiques',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
+        Text('Erreurs typiques', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
         ...report.typicalIssues.map((issue) => Text('• $issue')),
         const SizedBox(height: 16),
@@ -80,9 +77,7 @@ class TmdbMatchReportView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        '$icon ${result.show.name}$tmdbPart$scorePart$notePart',
-      ),
+      child: Text('$icon ${result.show.name}$tmdbPart$scorePart$notePart'),
     );
   }
 }

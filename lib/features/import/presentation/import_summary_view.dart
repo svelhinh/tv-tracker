@@ -19,9 +19,15 @@ class ImportSummaryView extends StatelessWidget {
       children: [
         _SectionTitle('Résumé'),
         const SizedBox(height: 8),
-        _StatRow(label: 'Fichiers CSV dans le ZIP', value: '${report.csvFileCount}'),
+        _StatRow(
+          label: 'Fichiers CSV dans le ZIP',
+          value: '${report.csvFileCount}',
+        ),
         _StatRow(label: 'Séries trouvées', value: '${summary.showCount}'),
-        _StatRow(label: 'Épisodes vus', value: '${summary.watchedEpisodeCount}'),
+        _StatRow(
+          label: 'Épisodes vus',
+          value: '${summary.watchedEpisodeCount}',
+        ),
         if (report.totalSkippedEpisodeRows > 0)
           _StatRow(
             label: 'Lignes épisodes ignorées',
@@ -58,7 +64,9 @@ class ImportSummaryView extends StatelessWidget {
         const SizedBox(height: 8),
         ...summary.exampleShows.map(_showLine),
         const SizedBox(height: 16),
-        _SectionTitle('Exemples d\'épisodes vus (${summary.exampleEpisodes.length})'),
+        _SectionTitle(
+          'Exemples d\'épisodes vus (${summary.exampleEpisodes.length})',
+        ),
         const SizedBox(height: 8),
         ...summary.exampleEpisodes.map(_episodeLine),
       ],
@@ -77,9 +85,7 @@ class ImportSummaryView extends StatelessWidget {
     final date = episode.watchedAt != null
         ? ' — ${_formatDate(episode.watchedAt!)}'
         : ' — date inconnue';
-    final showId = episode.showId.isEmpty
-        ? ''
-        : ' (série ${episode.showId})';
+    final showId = episode.showId.isEmpty ? '' : ' (série ${episode.showId})';
     return Text('• ${episode.label}$showId$date');
   }
 
@@ -108,11 +114,7 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _StatRow extends StatelessWidget {
-  const _StatRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _StatRow({required this.label, required this.value, this.valueColor});
 
   final String label;
   final String value;

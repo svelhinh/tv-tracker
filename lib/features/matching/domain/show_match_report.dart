@@ -33,8 +33,7 @@ class ShowMatchReport {
       .where((result) => result.confidence == ShowMatchConfidence.noMatch)
       .length;
 
-  double get confidentRate =>
-      sampleSize == 0 ? 0 : confidentCount / sampleSize;
+  double get confidentRate => sampleSize == 0 ? 0 : confidentCount / sampleSize;
 
   bool get isReliableEnough => confidentRate >= 0.8;
 

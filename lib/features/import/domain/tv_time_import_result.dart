@@ -9,10 +9,10 @@ class TvTimeImportResult {
     required this.watchedEpisodes,
     required this.report,
   }) : summary = TvTimeImportSummary.fromData(
-          shows: shows,
-          episodes: watchedEpisodes,
-          report: report,
-        );
+         shows: shows,
+         episodes: watchedEpisodes,
+         report: report,
+       );
 
   final List<TvTimeShow> shows;
   final List<TvTimeWatchedEpisode> watchedEpisodes;

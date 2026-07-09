@@ -53,24 +53,47 @@ class TmdbShowMatcher {
     );
   }
 
+  Future<String?> resolvePosterPath(
+    TvTimeShow show, {
+    ShowMatchOverride? override,
+  }) async {
+    if (override?.tmdbPosterPath != null &&
+        override!.tmdbPosterPath!.isNotEmpty) {
+      return override.tmdbPosterPath;
+    }
+
+    final searchResults = await _client.searchTv(show.name);
+    final match = _pickBestMatch(show, searchResults);
+    if (match.tmdbId == null) return null;
+
+    for (final candidate in searchResults) {
+      if (candidate.id == match.tmdbId) {
+        return candidate.posterPath;
+      }
+    }
+
+    return null;
+  }
+
   Future<List<TmdbShowSearchResult>> getCandidates(
     TvTimeShow show, {
     int limit = defaultCandidateCount,
   }) async {
     final searchResults = await _client.searchTv(show.name);
-    final scored = searchResults
-        .map(
-          (candidate) => (
-            candidate: candidate,
-            score: _titleScore(show.name, candidate),
-          ),
-        )
-        .toList()
-      ..sort((a, b) {
-        final scoreCompare = b.score.compareTo(a.score);
-        if (scoreCompare != 0) return scoreCompare;
-        return b.candidate.popularity.compareTo(a.candidate.popularity);
-      });
+    final scored =
+        searchResults
+            .map(
+              (candidate) => (
+                candidate: candidate,
+                score: _titleScore(show.name, candidate),
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final scoreCompare = b.score.compareTo(a.score);
+            if (scoreCompare != 0) return scoreCompare;
+            return b.candidate.popularity.compareTo(a.candidate.popularity);
+          });
 
     return scored.take(limit).map((entry) => entry.candidate).toList();
   }
@@ -109,19 +132,20 @@ class TmdbShowMatcher {
       );
     }
 
-    final scored = candidates
-        .map(
-          (candidate) => (
-            candidate: candidate,
-            score: _titleScore(show.name, candidate),
-          ),
-        )
-        .toList()
-      ..sort((a, b) {
-        final scoreCompare = b.score.compareTo(a.score);
-        if (scoreCompare != 0) return scoreCompare;
-        return b.candidate.popularity.compareTo(a.candidate.popularity);
-      });
+    final scored =
+        candidates
+            .map(
+              (candidate) => (
+                candidate: candidate,
+                score: _titleScore(show.name, candidate),
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final scoreCompare = b.score.compareTo(a.score);
+            if (scoreCompare != 0) return scoreCompare;
+            return b.candidate.popularity.compareTo(a.candidate.popularity);
+          });
 
     final best = scored.first;
     final secondScore = scored.length > 1 ? scored[1].score : 0.0;

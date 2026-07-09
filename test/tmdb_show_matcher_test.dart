@@ -25,7 +25,10 @@ void main() {
       final client = _FakeTmdbClient({
         'Attack on Titan': [
           const TmdbShowSearchResult(id: 1429, name: 'Attack on Titan'),
-          const TmdbShowSearchResult(id: 999, name: 'Attack on Titan: No Regrets'),
+          const TmdbShowSearchResult(
+            id: 999,
+            name: 'Attack on Titan: No Regrets',
+          ),
         ],
       });
       final matcher = TmdbShowMatcher(client);
@@ -65,6 +68,25 @@ void main() {
 
       expect(report.noMatchCount, 1);
       expect(report.results.first.confidence, ShowMatchConfidence.noMatch);
+    });
+
+    test('resolves poster path from best match', () async {
+      final client = _FakeTmdbClient({
+        'Arcane': [
+          const TmdbShowSearchResult(
+            id: 94605,
+            name: 'Arcane',
+            posterPath: '/arcane.jpg',
+          ),
+        ],
+      });
+      final matcher = TmdbShowMatcher(client);
+
+      final posterPath = await matcher.resolvePosterPath(
+        const TvTimeShow(tvTimeId: '1', name: 'Arcane'),
+      );
+
+      expect(posterPath, '/arcane.jpg');
     });
   });
 }

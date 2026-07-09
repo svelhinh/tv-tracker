@@ -43,11 +43,6 @@ class HomeScreen extends ConsumerWidget {
               onPressed: () => Navigator.pushNamed(context, AppRoutes.shows),
               child: const Text('Shows'),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.debug),
-              child: const Text('Debug'),
-            ),
           ],
         ),
       ),

@@ -20,11 +20,13 @@ final showMatchOverrideStoreProvider = Provider<ShowMatchOverrideStore>(
 );
 
 final showMatchOverridesProvider =
-    AsyncNotifierProvider<ShowMatchOverridesNotifier, Map<String, ShowMatchOverride>>(
-  ShowMatchOverridesNotifier.new,
-);
+    AsyncNotifierProvider<
+      ShowMatchOverridesNotifier,
+      Map<String, ShowMatchOverride>
+    >(ShowMatchOverridesNotifier.new);
 
-class ShowMatchOverridesNotifier extends AsyncNotifier<Map<String, ShowMatchOverride>> {
+class ShowMatchOverridesNotifier
+    extends AsyncNotifier<Map<String, ShowMatchOverride>> {
   @override
   Future<Map<String, ShowMatchOverride>> build() async {
     return ref.read(showMatchOverrideStoreProvider).loadAll();
@@ -35,12 +37,14 @@ class ShowMatchOverridesNotifier extends AsyncNotifier<Map<String, ShowMatchOver
     required int tmdbId,
     required String tmdbName,
     String? tmdbFirstAirDate,
+    String? tmdbPosterPath,
   }) async {
     final override = ShowMatchOverride.matched(
       tvTimeShowId: tvTimeShowId,
       tmdbId: tmdbId,
       tmdbName: tmdbName,
       tmdbFirstAirDate: tmdbFirstAirDate,
+      tmdbPosterPath: tmdbPosterPath,
     );
     await ref.read(showMatchOverrideStoreProvider).save(override);
     state = AsyncData(await ref.read(showMatchOverrideStoreProvider).loadAll());
@@ -79,17 +83,19 @@ final tmdbMatchReportProvider = FutureProvider<ShowMatchReport?>((ref) async {
   );
 });
 
-final tmdbCandidatesProvider = FutureProvider.family<List<TmdbShowSearchResult>, String>(
-  (ref, tvTimeShowId) async {
-    final import = await ref.watch(tvTimeImportProvider.future);
-    if (import == null) return [];
+final tmdbCandidatesProvider =
+    FutureProvider.family<List<TmdbShowSearchResult>, String>((
+      ref,
+      tvTimeShowId,
+    ) async {
+      final import = await ref.watch(tvTimeImportProvider.future);
+      if (import == null) return [];
 
-    final show = import.shows.firstWhere(
-      (entry) => entry.tvTimeId == tvTimeShowId,
-      orElse: () => throw StateError('Série introuvable: $tvTimeShowId'),
-    );
+      final show = import.shows.firstWhere(
+        (entry) => entry.tvTimeId == tvTimeShowId,
+        orElse: () => throw StateError('Série introuvable: $tvTimeShowId'),
+      );
 
-    final matcher = TmdbShowMatcher(ref.watch(tmdbClientProvider));
-    return matcher.getCandidates(show);
-  },
-);
+      final matcher = TmdbShowMatcher(ref.watch(tmdbClientProvider));
+      return matcher.getCandidates(show);
+    });

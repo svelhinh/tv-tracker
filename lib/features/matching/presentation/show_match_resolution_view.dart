@@ -34,9 +34,7 @@ class ShowMatchResolutionView extends ConsumerWidget {
         else ...[
           Text('${toResolve.length} série(s) ambiguë(s) ou sans match.'),
           const SizedBox(height: 12),
-          ...toResolve.map(
-            (result) => _ResolutionCard(result: result),
-          ),
+          ...toResolve.map((result) => _ResolutionCard(result: result)),
         ],
         const SizedBox(height: 16),
         _ManualCorrectionPicker(allShows: allShows),
@@ -113,34 +111,35 @@ class _ResolutionCard extends ConsumerWidget {
 }
 
 class _CandidateTile extends ConsumerWidget {
-  const _CandidateTile({
-    required this.showId,
-    required this.candidate,
-  });
+  const _CandidateTile({required this.showId, required this.candidate});
 
   final String showId;
   final TmdbShowSearchResult candidate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final year = candidate.firstAirDate != null &&
-            candidate.firstAirDate!.length >= 4
+    final year =
+        candidate.firstAirDate != null && candidate.firstAirDate!.length >= 4
         ? ' (${candidate.firstAirDate!.substring(0, 4)})'
         : '';
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text('[${candidate.id}] ${candidate.name}$year'),
-      subtitle: candidate.originalName != null &&
+      subtitle:
+          candidate.originalName != null &&
               candidate.originalName != candidate.name
           ? Text(candidate.originalName!)
           : null,
       trailing: FilledButton.tonal(
-        onPressed: () => ref.read(showMatchOverridesProvider.notifier).saveManualMatch(
+        onPressed: () => ref
+            .read(showMatchOverridesProvider.notifier)
+            .saveManualMatch(
               tvTimeShowId: showId,
               tmdbId: candidate.id,
               tmdbName: candidate.name,
               tmdbFirstAirDate: candidate.firstAirDate,
+              tmdbPosterPath: candidate.posterPath,
             ),
         child: const Text('Choisir'),
       ),
@@ -158,7 +157,8 @@ class _ManualCorrectionPicker extends ConsumerStatefulWidget {
       _ManualCorrectionPickerState();
 }
 
-class _ManualCorrectionPickerState extends ConsumerState<_ManualCorrectionPicker> {
+class _ManualCorrectionPickerState
+    extends ConsumerState<_ManualCorrectionPicker> {
   TvTimeShow? _selectedShow;
 
   @override
@@ -175,12 +175,7 @@ class _ManualCorrectionPickerState extends ConsumerState<_ManualCorrectionPicker
           width: double.infinity,
           label: const Text('Série TV Time'),
           dropdownMenuEntries: widget.allShows
-              .map(
-                (show) => DropdownMenuEntry(
-                  value: show,
-                  label: show.name,
-                ),
-              )
+              .map((show) => DropdownMenuEntry(value: show, label: show.name))
               .toList(),
           onSelected: (show) => setState(() => _selectedShow = show),
         ),
