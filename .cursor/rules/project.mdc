@@ -1,0 +1,86 @@
+---
+description: Règles projet pour le prototype Flutter TV Tracker
+alwaysApply: true
+---
+
+# TV Tracker — Project Rules
+
+## Objectif du projet
+
+Ce projet est un prototype technique privé d'une app Flutter permettant de tester :
+- l'import d'un export TV Time ;
+- le matching de séries avec TMDB ;
+- un tracker minimal de séries/épisodes ;
+- une première estimation des coûts si le projet scale.
+
+Ce n'est pas encore une app finale.
+
+## Règles générales
+
+- Garder le code simple, lisible et facile à modifier.
+- Ne pas sur-architecturer le projet.
+- Ne pas ajouter de backend, auth, base locale ou API TMDB tant que la tâche ne le demande pas explicitement.
+- Ne pas créer de features non demandées.
+- Privilégier des petits fichiers clairs plutôt que des gros fichiers fourre-tout.
+- Donner des noms explicites aux classes, fichiers, providers et méthodes.
+- Éviter le code magique ou trop abstrait.
+- Éviter les commentaires inutiles ; commenter seulement les décisions qui ne sont pas évidentes.
+
+## Architecture Flutter
+
+Utiliser une structure simple par feature :
+
+```txt
+lib/
+  app/
+  core/
+  features/
+    feature_name/
+      presentation/
+      application/
+      domain/
+      data/
+```
+
+Ne créer `application`, `domain` ou `data` que si la feature en a vraiment besoin.
+
+Pour le setup initial, `presentation` suffit.
+
+## Riverpod
+
+* Utiliser `flutter_riverpod`.
+* Toujours lancer l'app avec `ProviderScope`.
+* Garder les providers proches de la feature concernée.
+* Éviter les global providers inutiles.
+* Utiliser des providers simples au début.
+* Ne pas introduire de génération de code Riverpod pour l'instant.
+* Ne pas utiliser `riverpod_annotation` sauf demande explicite.
+
+## UI
+
+* UI simple et fonctionnelle.
+* Material classique.
+* Pas de design final.
+* Pas d'animations ou polish visuel tant que le cœur technique n'est pas validé.
+* Chaque écran doit avoir un but clair.
+
+## Qualité du code
+
+Avant de considérer une tâche terminée :
+
+* le projet doit compiler ;
+* le code doit être formaté ;
+* les imports inutiles doivent être supprimés ;
+* les fichiers doivent rester courts et compréhensibles ;
+* aucune feature hors scope ne doit être ajoutée.
+
+## Manière de travailler
+
+À chaque tâche :
+
+1. Lire les règles projet.
+2. Comprendre le scope exact.
+3. Proposer brièvement les fichiers à modifier.
+4. Faire uniquement ce qui est demandé.
+5. Résumer les changements à la fin.
+6. Indiquer la prochaine tâche logique.
