@@ -22,6 +22,10 @@ class TmdbMatchReportView extends StatelessWidget {
         const SizedBox(height: 8),
         _StatRow('Échantillon testé', '${report.sampleSize} séries'),
         _StatRow('Matchs confiants', '${report.confidentCount} ($confidentPercent%)'),
+        if (report.manualCount > 0)
+          _StatRow('Choix manuels', '${report.manualCount}'),
+        if (report.ignoredCount > 0)
+          _StatRow('Ignorées', '${report.ignoredCount}'),
         _StatRow('Ambigus', '${report.ambiguousCount}'),
         _StatRow('Sans match', '${report.noMatchCount}'),
         if (report.apiErrors > 0)
@@ -57,9 +61,11 @@ class TmdbMatchReportView extends StatelessWidget {
   Widget _matchLine(ShowMatchResult result) {
     final icon = switch (result.confidence) {
       ShowMatchConfidence.confident => '✓',
+      ShowMatchConfidence.manual => '✓',
       ShowMatchConfidence.ambiguous => '?',
       ShowMatchConfidence.noMatch => '✗',
       ShowMatchConfidence.error => '!',
+      ShowMatchConfidence.ignored => '−',
     };
 
     final tmdbPart = result.tmdbId != null

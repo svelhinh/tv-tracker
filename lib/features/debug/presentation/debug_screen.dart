@@ -7,6 +7,7 @@ import '../../../core/config/tmdb_config.dart';
 import '../../import/application/tv_time_import_provider.dart';
 import '../../import/presentation/import_summary_view.dart';
 import '../../matching/application/tmdb_match_provider.dart';
+import '../../matching/presentation/show_match_resolution_view.dart';
 import '../../matching/presentation/tmdb_match_report_view.dart';
 
 class DebugScreen extends ConsumerWidget {
@@ -114,7 +115,17 @@ class DebugScreen extends ConsumerWidget {
                           '20 séries.',
                         );
                       }
-                      return TmdbMatchReportView(report: report);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TmdbMatchReportView(report: report),
+                          const SizedBox(height: 24),
+                          ShowMatchResolutionView(
+                            report: report,
+                            allShows: result.shows,
+                          ),
+                        ],
+                      );
                     },
                     loading: () => const CircularProgressIndicator(),
                     error: (error, _) => Text('Erreur matching : $error'),

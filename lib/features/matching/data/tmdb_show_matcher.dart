@@ -1,10 +1,12 @@
 import '../../import/domain/tv_time_show.dart';
+import '../domain/show_match_override.dart';
 import '../domain/show_match_report.dart';
 import '../domain/show_match_result.dart';
 import '../domain/tmdb_show_search_result.dart';
 import 'tmdb_client.dart';
 
 const defaultMatchSampleSize = 20;
+const defaultCandidateCount = 5;
 
 class TmdbShowMatcher {
   TmdbShowMatcher(this._client);
@@ -13,13 +15,20 @@ class TmdbShowMatcher {
 
   Future<ShowMatchReport> matchShows(
     List<TvTimeShow> shows, {
-    int sampleSize = defaultMatchSampleSize,
+    int? sampleSize,
+    Map<String, ShowMatchOverride> overrides = const {},
   }) async {
-    final sample = shows.take(sampleSize).toList();
+    final sample = sampleSize == null ? shows : shows.take(sampleSize).toList();
     final results = <ShowMatchResult>[];
     var apiErrors = 0;
 
     for (final show in sample) {
+      final override = overrides[show.tvTimeId];
+      if (override != null) {
+        results.add(_resultFromOverride(show, override));
+        continue;
+      }
+
       try {
         final searchResults = await _client.searchTv(show.name);
         results.add(_pickBestMatch(show, searchResults));
@@ -41,6 +50,50 @@ class TmdbShowMatcher {
       results: results,
       sampleSize: sample.length,
       apiErrors: apiErrors,
+    );
+  }
+
+  Future<List<TmdbShowSearchResult>> getCandidates(
+    TvTimeShow show, {
+    int limit = defaultCandidateCount,
+  }) async {
+    final searchResults = await _client.searchTv(show.name);
+    final scored = searchResults
+        .map(
+          (candidate) => (
+            candidate: candidate,
+            score: _titleScore(show.name, candidate),
+          ),
+        )
+        .toList()
+      ..sort((a, b) {
+        final scoreCompare = b.score.compareTo(a.score);
+        if (scoreCompare != 0) return scoreCompare;
+        return b.candidate.popularity.compareTo(a.candidate.popularity);
+      });
+
+    return scored.take(limit).map((entry) => entry.candidate).toList();
+  }
+
+  ShowMatchResult _resultFromOverride(
+    TvTimeShow show,
+    ShowMatchOverride override,
+  ) {
+    if (override.isIgnored) {
+      return ShowMatchResult(
+        show: show,
+        confidence: ShowMatchConfidence.ignored,
+        note: 'Ignorée manuellement.',
+      );
+    }
+
+    return ShowMatchResult(
+      show: show,
+      tmdbId: override.tmdbId,
+      tmdbName: override.tmdbName,
+      tmdbFirstAirDate: override.tmdbFirstAirDate,
+      confidence: ShowMatchConfidence.manual,
+      note: 'Choix manuel enregistré.',
     );
   }
 

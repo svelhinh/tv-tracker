@@ -5,6 +5,8 @@ enum ShowMatchConfidence {
   ambiguous,
   noMatch,
   error,
+  manual,
+  ignored,
 }
 
 class ShowMatchResult {
@@ -26,5 +28,12 @@ class ShowMatchResult {
   final double? score;
   final String? note;
 
-  bool get isConfidentMatch => confidence == ShowMatchConfidence.confident;
+  bool get isConfidentMatch =>
+      confidence == ShowMatchConfidence.confident ||
+      confidence == ShowMatchConfidence.manual;
+
+  bool get needsResolution =>
+      confidence == ShowMatchConfidence.ambiguous ||
+      confidence == ShowMatchConfidence.noMatch ||
+      confidence == ShowMatchConfidence.error;
 }

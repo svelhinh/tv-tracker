@@ -14,6 +14,17 @@ class ShowMatchReport {
   int get confidentCount =>
       results.where((result) => result.isConfidentMatch).length;
 
+  int get manualCount => results
+      .where((result) => result.confidence == ShowMatchConfidence.manual)
+      .length;
+
+  int get ignoredCount => results
+      .where((result) => result.confidence == ShowMatchConfidence.ignored)
+      .length;
+
+  List<ShowMatchResult> get needsResolutionResults =>
+      results.where((result) => result.needsResolution).toList();
+
   int get ambiguousCount => results
       .where((result) => result.confidence == ShowMatchConfidence.ambiguous)
       .length;
