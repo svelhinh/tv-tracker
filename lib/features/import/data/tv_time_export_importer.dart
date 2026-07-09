@@ -3,17 +3,22 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 
+import '../application/import_metrics_calculator.dart';
 import '../domain/tv_time_import_result.dart';
 import 'tv_time_gdpr_parser.dart';
 
 class TvTimeExportImporter {
   static Future<TvTimeImportResult> importFromZipFile(String zipPath) async {
     final bytes = await File(zipPath).readAsBytes();
-    return importFromZipBytes(bytes);
+    return importFromZipBytes(bytes, zipSizeBytes: bytes.length);
   }
 
-  static Future<TvTimeImportResult> importFromZipBytes(List<int> bytes) async {
+  static Future<TvTimeImportResult> importFromZipBytes(
+    List<int> bytes, {
+    int? zipSizeBytes,
+  }) async {
     Directory? tempDir;
+    final stopwatch = Stopwatch()..start();
 
     try {
       tempDir = await _extractZipToTemp(bytes);
@@ -24,7 +29,19 @@ class TvTimeExportImporter {
         );
       }
 
-      return TvTimeGdprParser.parseFromDirectory(exportDir.path);
+      final result = TvTimeGdprParser.parseFromDirectory(exportDir.path);
+      stopwatch.stop();
+
+      return TvTimeImportResult(
+        shows: result.shows,
+        watchedEpisodes: result.watchedEpisodes,
+        report: result.report,
+        metrics: ImportMetricsCalculator.compute(
+          result: result,
+          importDuration: stopwatch.elapsed,
+          zipSizeBytes: zipSizeBytes ?? bytes.length,
+        ),
+      );
     } finally {
       await tempDir?.delete(recursive: true);
     }

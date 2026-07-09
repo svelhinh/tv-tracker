@@ -1,3 +1,4 @@
+import 'import_metrics.dart';
 import 'tv_time_import_summary.dart';
 import 'tv_time_parse_report.dart';
 import 'tv_time_show.dart';
@@ -8,6 +9,7 @@ class TvTimeImportResult {
     required this.shows,
     required this.watchedEpisodes,
     required this.report,
+    this.metrics,
   }) : summary = TvTimeImportSummary.fromData(
          shows: shows,
          episodes: watchedEpisodes,
@@ -18,4 +20,5 @@ class TvTimeImportResult {
   final List<TvTimeWatchedEpisode> watchedEpisodes;
   final TvTimeParseReport report;
   final TvTimeImportSummary summary;
+  final ImportMetrics? metrics;
 }

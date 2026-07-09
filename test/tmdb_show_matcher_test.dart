@@ -39,6 +39,7 @@ void main() {
 
       expect(report.confidentCount, 1);
       expect(report.results.first.tmdbId, 1429);
+      expect(report.results.first.tmdbPosterPath, isNull);
       expect(report.results.first.confidence, ShowMatchConfidence.confident);
     });
 

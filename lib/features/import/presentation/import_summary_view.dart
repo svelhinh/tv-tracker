@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../matching/application/post_import_tmdb_sync.dart';
+import '../../matching/application/tmdb_match_provider.dart';
+import '../domain/import_metrics.dart';
 import '../domain/tv_time_import_result.dart';
 import '../domain/tv_time_show.dart';
 import '../domain/tv_time_watched_episode.dart';
 
-class ImportSummaryView extends StatelessWidget {
+class ImportSummaryView extends ConsumerWidget {
   const ImportSummaryView({super.key, required this.result});
 
   final TvTimeImportResult result;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final summary = result.summary;
     final report = summary.report;
+    final metrics = result.metrics;
+    final tmdbMetrics = ref.watch(tmdbApiMetricsProvider);
+    final tmdbSyncInProgress = ref.watch(postImportTmdbSyncInProgressProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,6 +40,59 @@ class ImportSummaryView extends StatelessWidget {
             label: 'Lignes épisodes ignorées',
             value: '${report.totalSkippedEpisodeRows}',
           ),
+        if (metrics != null) ...[
+          const SizedBox(height: 16),
+          _SectionTitle('Métriques import & scale'),
+          const SizedBox(height: 8),
+          _StatRow(
+            label: 'Durée import (parse ZIP)',
+            value: _formatDuration(metrics.importDuration),
+          ),
+          if (metrics.zipSizeBytes > 0)
+            _StatRow(
+              label: 'Taille ZIP',
+              value: _formatBytes(metrics.zipSizeBytes),
+            ),
+          _StatRow(
+            label: 'Stockage local estimé',
+            value: _formatBytes(metrics.estimatedStorageBytes),
+          ),
+          _StatRow(
+            label: 'Appels TMDB pendant import',
+            value: '${metrics.tmdbCallsDuringImport}',
+          ),
+          _StatRow(
+            label: 'Appels TMDB estimés (1re session)',
+            value: '${metrics.estimatedTmdbCallsFirstSession}',
+          ),
+          if (tmdbSyncInProgress)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Sync TMDB en cours (matching + posters en arrière-plan)…',
+                style: TextStyle(color: Colors.blueGrey),
+              ),
+            ),
+          if (tmdbMetrics.callCount > 0) ...[
+            _StatRow(
+              label: 'Appels TMDB réels (session)',
+              value: '${tmdbMetrics.callCount}',
+            ),
+            if (tmdbMetrics.cacheHitCount > 0)
+              _StatRow(
+                label: 'Cache TMDB (hits session)',
+                value: '${tmdbMetrics.cacheHitCount}',
+              ),
+          ],
+          const SizedBox(height: 8),
+          _SectionTitle('Extrapolation', color: Colors.blueGrey),
+          const SizedBox(height: 8),
+          ...metrics.extrapolate().map(_scaleLine),
+          const SizedBox(height: 8),
+          _SectionTitle('Risques coût', color: Colors.deepOrange),
+          const SizedBox(height: 8),
+          ...metrics.costRiskNotes.map((note) => Text('• $note')),
+        ],
         const SizedBox(height: 16),
         _SectionTitle('Fichiers sources'),
         const SizedBox(height: 8),
@@ -73,6 +133,20 @@ class ImportSummaryView extends StatelessWidget {
     );
   }
 
+  Widget _scaleLine(ScaleEstimate estimate) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        '• ${estimate.userCount} utilisateurs : '
+        '${estimate.totalShows} séries, '
+        '${estimate.totalEpisodes} épisodes, '
+        '${estimate.totalTmdbCallsFirstSession} appels TMDB, '
+        '${estimate.storageLabel} stockage, '
+        '${estimate.importTimeLabel} import séquentiel',
+      ),
+    );
+  }
+
   Widget _showLine(TvTimeShow show) {
     final seen = show.episodesSeenCount != null
         ? ' — ${show.episodesSeenCount} ep. vus (agrégat)'
@@ -95,6 +169,21 @@ class ImportSummaryView extends StatelessWidget {
     final m = local.month.toString().padLeft(2, '0');
     final d = local.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes o';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} Ko';
+    }
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inMilliseconds >= 1000) {
+      return '${(duration.inMilliseconds / 1000).toStringAsFixed(2)} s';
+    }
+    return '${duration.inMilliseconds} ms';
   }
 }
 

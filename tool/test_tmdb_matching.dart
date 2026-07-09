@@ -11,7 +11,9 @@ Future<void> main() async {
 
   if (!hasTmdbApiKey) {
     stderr.writeln('TMDB_API_KEY manquant.');
-    stderr.writeln('Crée un fichier .env à la racine (voir .env.example), ou lance avec :');
+    stderr.writeln(
+      'Crée un fichier .env à la racine (voir .env.example), ou lance avec :',
+    );
     stderr.writeln(
       'dart run tool/test_tmdb_matching.dart '
       '--dart-define=TMDB_API_KEY=ta_cle',

@@ -77,6 +77,15 @@ class ShowPosterCacheNotifier extends AsyncNotifier<Map<String, String>> {
       ref.read(posterFetchInProgressProvider.notifier).state = false;
     }
   }
+
+  Future<void> mergePosters(Map<String, String> posters) async {
+    if (posters.isEmpty) return;
+
+    final cache = Map<String, String>.from(state.valueOrNull ?? {});
+    cache.addAll(posters);
+    await ref.read(posterCacheStoreProvider).saveAll(cache);
+    state = AsyncData(cache);
+  }
 }
 
 final showPosterUrlProvider = Provider.family<String?, String>((ref, showId) {
@@ -139,7 +148,8 @@ Future<void> loadPostersForPage(WidgetRef ref, int pageNumber) async {
   await ref.read(showPosterCacheProvider.notifier).loadPostersForShows(shows);
 }
 
-void resetShowsPagination(WidgetRef ref) {
+Future<void> resetShowsPagination(WidgetRef ref) async {
   ref.read(showsPageCountProvider.notifier).state = 1;
+  await ref.read(posterCacheStoreProvider).saveAll({});
   ref.invalidate(showPosterCacheProvider);
 }

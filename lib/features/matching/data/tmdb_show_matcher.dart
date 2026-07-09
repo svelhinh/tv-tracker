@@ -64,15 +64,7 @@ class TmdbShowMatcher {
 
     final searchResults = await _client.searchTv(show.name);
     final match = _pickBestMatch(show, searchResults);
-    if (match.tmdbId == null) return null;
-
-    for (final candidate in searchResults) {
-      if (candidate.id == match.tmdbId) {
-        return candidate.posterPath;
-      }
-    }
-
-    return null;
+    return match.tmdbPosterPath;
   }
 
   Future<List<TmdbShowSearchResult>> getCandidates(
@@ -115,6 +107,7 @@ class TmdbShowMatcher {
       tmdbId: override.tmdbId,
       tmdbName: override.tmdbName,
       tmdbFirstAirDate: override.tmdbFirstAirDate,
+      tmdbPosterPath: override.tmdbPosterPath,
       confidence: ShowMatchConfidence.manual,
       note: 'Choix manuel enregistré.',
     );
@@ -166,6 +159,7 @@ class TmdbShowMatcher {
         tmdbId: best.candidate.id,
         tmdbName: best.candidate.name,
         tmdbFirstAirDate: best.candidate.firstAirDate,
+        tmdbPosterPath: best.candidate.posterPath,
         confidence: ShowMatchConfidence.ambiguous,
         score: best.score,
         note: runnerUp != null
@@ -192,6 +186,7 @@ class TmdbShowMatcher {
       tmdbId: candidate.id,
       tmdbName: candidate.name,
       tmdbFirstAirDate: candidate.firstAirDate,
+      tmdbPosterPath: candidate.posterPath,
       confidence: ShowMatchConfidence.confident,
       score: score,
     );
@@ -233,4 +228,16 @@ class TmdbShowMatcher {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
+}
+
+Map<String, String> posterPathsFromMatchResults(List<ShowMatchResult> results) {
+  const noPosterSentinel = '';
+  final posters = <String, String>{};
+
+  for (final result in results) {
+    if (result.confidence == ShowMatchConfidence.ignored) continue;
+    posters[result.show.tvTimeId] = result.tmdbPosterPath ?? noPosterSentinel;
+  }
+
+  return posters;
 }

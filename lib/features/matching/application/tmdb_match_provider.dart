@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/tmdb_config.dart';
+import '../../../core/metrics/tmdb_api_metrics.dart';
 import '../../import/application/tv_time_import_provider.dart';
 import '../data/show_match_override_store.dart';
 import '../data/tmdb_client.dart';
@@ -9,8 +10,13 @@ import '../domain/show_match_override.dart';
 import '../domain/show_match_report.dart';
 import '../domain/tmdb_show_search_result.dart';
 
+final tmdbApiMetricsProvider = StateProvider<TmdbApiMetrics>(
+  (ref) => TmdbApiMetrics(),
+);
+
 final tmdbClientProvider = Provider<TmdbClient>((ref) {
-  final client = TmdbClient();
+  final metrics = ref.watch(tmdbApiMetricsProvider);
+  final client = TmdbClient(metrics: metrics);
   ref.onDispose(client.close);
   return client;
 });

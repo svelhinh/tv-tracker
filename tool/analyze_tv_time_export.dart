@@ -6,7 +6,9 @@ void main() {
   final exportDir = Directory('resources/gdpr-data');
   if (!exportDir.existsSync()) {
     stderr.writeln('Dossier introuvable : ${exportDir.path}');
-    stderr.writeln('Place un export TV Time décompressé dans resources/gdpr-data/');
+    stderr.writeln(
+      'Place un export TV Time décompressé dans resources/gdpr-data/',
+    );
     exitCode = 1;
     return;
   }

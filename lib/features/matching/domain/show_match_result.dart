@@ -15,6 +15,7 @@ class ShowMatchResult {
     this.tmdbId,
     this.tmdbName,
     this.tmdbFirstAirDate,
+    this.tmdbPosterPath,
     required this.confidence,
     this.score,
     this.note,
@@ -24,6 +25,7 @@ class ShowMatchResult {
   final int? tmdbId;
   final String? tmdbName;
   final String? tmdbFirstAirDate;
+  final String? tmdbPosterPath;
   final ShowMatchConfidence confidence;
   final double? score;
   final String? note;
