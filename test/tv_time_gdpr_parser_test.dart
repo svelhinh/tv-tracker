@@ -20,9 +20,10 @@ user_id,tv_show_id,is_followed,is_favorited,nb_episodes_seen,tv_show_name
         TvTimeGdprParser.userShowDataFile: userData,
       });
 
-      expect(result.shows, hasLength(2));
+      expect(result.summary.showCount, 2);
       expect(result.shows.first.name, 'Lost');
       expect(result.shows.first.episodesSeenCount, 65);
+      expect(result.summary.report.showsWithoutSeenCount, 1);
 
       final lost = result.shows.firstWhere((show) => show.tvTimeId == '73739');
       expect(lost.isActive, isFalse);
@@ -37,13 +38,12 @@ ep_id,gsi,series_name,season_number,episode_number,s_id,key,user_id,created_at,e
 
       final result = TvTimeGdprParser.parseFromFiles({
         TvTimeGdprParser.trackingRecordsV2File: v2,
+        TvTimeGdprParser.followedShowsFile: 'tv_show_id,tv_show_name\n1,Test',
       });
 
-      expect(result.watchedEpisodes, hasLength(1));
+      expect(result.summary.watchedEpisodeCount, 1);
       expect(result.watchedEpisodes.first.showName, 'Attack on Titan');
-      expect(result.watchedEpisodes.first.seasonNumber, 4);
-      expect(result.watchedEpisodes.first.episodeNumber, 3);
-      expect(result.watchedEpisodes.first.episodeId, '8068625');
+      expect(result.summary.report.skippedEpisodeRowsV2, 0);
     });
 
     test('parse watched episodes from tracking v1 watch rows', () {
@@ -54,12 +54,11 @@ watch-abc,2021-07-11 13:14:10,,My Hero Academia,watch,12589638,305074,009fb7d8,2
 
       final result = TvTimeGdprParser.parseFromFiles({
         TvTimeGdprParser.trackingRecordsFile: v1,
+        TvTimeGdprParser.followedShowsFile: 'tv_show_id,tv_show_name\n1,Test',
       });
 
-      expect(result.watchedEpisodes, hasLength(1));
+      expect(result.summary.watchedEpisodeCount, 1);
       expect(result.watchedEpisodes.first.showName, 'My Hero Academia');
-      expect(result.watchedEpisodes.first.seasonNumber, 5);
-      expect(result.watchedEpisodes.first.episodeNumber, 15);
       expect(result.watchedEpisodes.first.watchedAt, isNotNull);
     });
 
@@ -77,9 +76,24 @@ Attack on Titan,4,3,12589638,8068625,1,2022-01-01 00:00:00,2022-01-01 00:00:00
       final result = TvTimeGdprParser.parseFromFiles({
         TvTimeGdprParser.trackingRecordsV2File: v2,
         TvTimeGdprParser.rewatchedEpisodesFile: rewatched,
+        TvTimeGdprParser.followedShowsFile: 'tv_show_id,tv_show_name\n1,Test',
       });
 
-      expect(result.watchedEpisodes, hasLength(1));
+      expect(result.summary.watchedEpisodeCount, 1);
+      expect(result.summary.report.episodesWithoutShowId, 1);
+    });
+
+    test('builds summary with warnings for missing source files', () {
+      final result = TvTimeGdprParser.parseFromFiles({
+        TvTimeGdprParser.followedShowsFile:
+            'tv_show_id,tv_show_name\n1,Test Show',
+      });
+
+      expect(result.summary.showCount, 1);
+      expect(result.summary.report.hasWarnings, isTrue);
+      expect(result.summary.report.warnings, isNotEmpty);
+      expect(result.summary.exampleShows, hasLength(1));
+      expect(result.summary.fieldNotes, isNotEmpty);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import '../domain/tv_time_import_result.dart';
+import '../domain/tv_time_parse_report.dart';
 import '../domain/tv_time_show.dart';
 import '../domain/tv_time_watched_episode.dart';
 
@@ -11,6 +12,15 @@ class TvTimeGdprParser {
   static const trackingRecordsV2File = 'tracking-prod-records-v2.csv';
   static const trackingRecordsFile = 'tracking-prod-records.csv';
   static const rewatchedEpisodesFile = 'rewatched_episode.csv';
+  static const legacySeenEpisodeFile = 'seen_episode.csv';
+
+  static const _sourceFiles = [
+    followedShowsFile,
+    userShowDataFile,
+    trackingRecordsV2File,
+    trackingRecordsFile,
+    rewatchedEpisodesFile,
+  ];
 
   static TvTimeImportResult parseFromDirectory(String directoryPath) {
     final dir = Directory(directoryPath);
@@ -26,18 +36,68 @@ class TvTimeGdprParser {
   }
 
   static TvTimeImportResult parseFromFiles(Map<String, String> files) {
-    final episodesSeenByShowId = _parseEpisodesSeenCounts(
-      files[userShowDataFile],
-    );
-    final shows = _parseShows(
+    final errors = <String>[];
+    final warnings = <String>[];
+    final legacyFilesPresent = <String>[];
+
+    final sourceFilesPresent = {
+      for (final name in _sourceFiles) name: files.containsKey(name),
+    };
+
+    if (!sourceFilesPresent[followedShowsFile]!) {
+      errors.add('$followedShowsFile introuvable — impossible de lister les séries.');
+    }
+
+    if (!sourceFilesPresent[userShowDataFile]!) {
+      warnings.add('$userShowDataFile absent — nb_episodes_seen indisponible.');
+    }
+
+    if (!sourceFilesPresent[trackingRecordsV2File]! &&
+        !sourceFilesPresent[trackingRecordsFile]!) {
+      warnings.add(
+        'Aucun fichier tracking-prod-records*.csv — la liste détaillée des '
+        'épisodes vus sera vide ou très incomplète.',
+      );
+    } else if (!sourceFilesPresent[trackingRecordsV2File]!) {
+      warnings.add(
+        '$trackingRecordsV2File absent — seul $trackingRecordsFile sera utilisé.',
+      );
+    }
+
+    if (!sourceFilesPresent[rewatchedEpisodesFile]!) {
+      warnings.add('$rewatchedEpisodesFile absent — rewatchs non inclus.');
+    }
+
+    if (files.containsKey(legacySeenEpisodeFile)) {
+      legacyFilesPresent.add(legacySeenEpisodeFile);
+    }
+
+    final episodesSeenByShowId = _parseEpisodesSeenCounts(files[userShowDataFile]);
+    final showParse = _parseShows(
       files[followedShowsFile],
       episodesSeenByShowId,
     );
-    final watchedEpisodes = _parseWatchedEpisodes(files);
+    final episodeParse = _parseWatchedEpisodes(files);
+
+    final report = TvTimeParseReport(
+      errors: errors,
+      warnings: warnings,
+      csvFileCount: files.length,
+      sourceFilesPresent: sourceFilesPresent,
+      skippedShowRows: showParse.skippedRows,
+      skippedEpisodeRowsV2: episodeParse.skippedV2,
+      skippedEpisodeRowsV1: episodeParse.skippedV1,
+      skippedEpisodeRowsRewatched: episodeParse.skippedRewatched,
+      episodesWithoutWatchDate: episodeParse.withoutWatchDate,
+      episodesWithoutShowId: episodeParse.withoutShowId,
+      showsWithoutSeenCount: showParse.withoutSeenCount,
+      legacyFilesPresent: legacyFilesPresent,
+    );
 
     return TvTimeImportResult(
-      shows: shows,
-      watchedEpisodes: watchedEpisodes,
+      shows: showParse.shows,
+      watchedEpisodes: episodeParse.episodes,
+      report: report,
     );
   }
 
@@ -54,36 +114,52 @@ class TvTimeGdprParser {
     return counts;
   }
 
-  static List<TvTimeShow> _parseShows(
+  static _ShowParseResult _parseShows(
     String? followedCsv,
     Map<String, int> episodesSeenByShowId,
   ) {
-    if (followedCsv == null) return [];
+    if (followedCsv == null) {
+      return const _ShowParseResult();
+    }
 
     final shows = <TvTimeShow>[];
+    var skippedRows = 0;
+    var withoutSeenCount = 0;
+
     for (final row in _parseCsvRows(followedCsv)) {
       final id = row['tv_show_id'];
       final name = row['tv_show_name'];
-      if (id == null || name == null || name.isEmpty) continue;
+      if (id == null || name == null || name.isEmpty) {
+        skippedRows++;
+        continue;
+      }
+
+      final seenCount = episodesSeenByShowId[id];
+      if (seenCount == null) withoutSeenCount++;
 
       shows.add(
         TvTimeShow(
           tvTimeId: id,
           name: name,
           isActive: row['active'] != '0',
-          episodesSeenCount: episodesSeenByShowId[id],
+          episodesSeenCount: seenCount,
         ),
       );
     }
 
     shows.sort((a, b) => a.name.compareTo(b.name));
-    return shows;
+    return _ShowParseResult(
+      shows: shows,
+      skippedRows: skippedRows,
+      withoutSeenCount: withoutSeenCount,
+    );
   }
 
-  static List<TvTimeWatchedEpisode> _parseWatchedEpisodes(
-    Map<String, String> files,
-  ) {
+  static _EpisodeParseResult _parseWatchedEpisodes(Map<String, String> files) {
     final byEpisodeId = <String, TvTimeWatchedEpisode>{};
+    var skippedV2 = 0;
+    var skippedV1 = 0;
+    var skippedRewatched = 0;
 
     void addEpisode(TvTimeWatchedEpisode episode) {
       final existing = byEpisodeId[episode.episodeId];
@@ -94,7 +170,8 @@ class TvTimeGdprParser {
 
       final existingDate = existing.watchedAt;
       final newDate = episode.watchedAt;
-      if (existingDate == null || (newDate != null && newDate.isAfter(existingDate))) {
+      if (existingDate == null ||
+          (newDate != null && newDate.isAfter(existingDate))) {
         byEpisodeId[episode.episodeId] = episode;
       }
     }
@@ -104,19 +181,31 @@ class TvTimeGdprParser {
       if (!gsi.startsWith('watch-episode')) continue;
 
       final episode = _episodeFromV2Row(row);
-      if (episode != null) addEpisode(episode);
+      if (episode == null) {
+        skippedV2++;
+        continue;
+      }
+      addEpisode(episode);
     }
 
     for (final row in _parseCsvRows(files[trackingRecordsFile] ?? '')) {
       if (row['type'] != 'watch') continue;
 
       final episode = _episodeFromV1Row(row);
-      if (episode != null) addEpisode(episode);
+      if (episode == null) {
+        skippedV1++;
+        continue;
+      }
+      addEpisode(episode);
     }
 
     for (final row in _parseCsvRows(files[rewatchedEpisodesFile] ?? '')) {
       final episode = _episodeFromRewatchedRow(row);
-      if (episode != null) addEpisode(episode);
+      if (episode == null) {
+        skippedRewatched++;
+        continue;
+      }
+      addEpisode(episode);
     }
 
     final episodes = byEpisodeId.values.toList()
@@ -128,7 +217,19 @@ class TvTimeGdprParser {
         return a.episodeNumber.compareTo(b.episodeNumber);
       });
 
-    return episodes;
+    final withoutWatchDate =
+        episodes.where((episode) => episode.watchedAt == null).length;
+    final withoutShowId =
+        episodes.where((episode) => episode.showId.isEmpty).length;
+
+    return _EpisodeParseResult(
+      episodes: episodes,
+      skippedV2: skippedV2,
+      skippedV1: skippedV1,
+      skippedRewatched: skippedRewatched,
+      withoutWatchDate: withoutWatchDate,
+      withoutShowId: withoutShowId,
+    );
   }
 
   static TvTimeWatchedEpisode? _episodeFromV2Row(Map<String, String> row) {
@@ -136,14 +237,13 @@ class TvTimeGdprParser {
     final showId = row['s_id'];
     final season = int.tryParse(row['season_number'] ?? '');
     final episodeNumber = int.tryParse(row['episode_number'] ?? '');
-    final episodeId = row['episode_id'] ?? row['ep_id'];
+    final episodeId = row['episode_id'].ifEmpty(row['ep_id']);
 
     if (showName == null ||
         showId == null ||
         season == null ||
         episodeNumber == null ||
-        episodeId == null ||
-        episodeId.isEmpty) {
+        episodeId == null) {
       return null;
     }
 
@@ -220,7 +320,8 @@ class TvTimeGdprParser {
   static DateTime? _parseUnixSeconds(String value) {
     final seconds = int.tryParse(value);
     if (seconds == null) return null;
-    return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true).toLocal();
+    return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true)
+        .toLocal();
   }
 
   static List<Map<String, String>> _parseCsvRows(String csv) {
@@ -288,5 +389,42 @@ class TvTimeGdprParser {
           },
         )
         .toList();
+  }
+}
+
+class _ShowParseResult {
+  const _ShowParseResult({
+    this.shows = const [],
+    this.skippedRows = 0,
+    this.withoutSeenCount = 0,
+  });
+
+  final List<TvTimeShow> shows;
+  final int skippedRows;
+  final int withoutSeenCount;
+}
+
+class _EpisodeParseResult {
+  const _EpisodeParseResult({
+    this.episodes = const [],
+    this.skippedV2 = 0,
+    this.skippedV1 = 0,
+    this.skippedRewatched = 0,
+    this.withoutWatchDate = 0,
+    this.withoutShowId = 0,
+  });
+
+  final List<TvTimeWatchedEpisode> episodes;
+  final int skippedV2;
+  final int skippedV1;
+  final int skippedRewatched;
+  final int withoutWatchDate;
+  final int withoutShowId;
+}
+
+extension _NullableStringFallback on String? {
+  String? ifEmpty(String? fallback) {
+    if (this == null || this!.isEmpty) return fallback;
+    return this;
   }
 }

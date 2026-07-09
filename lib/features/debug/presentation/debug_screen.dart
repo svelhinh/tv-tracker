@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_providers.dart';
 import '../../import/application/tv_time_import_provider.dart';
+import '../../import/presentation/import_summary_view.dart';
 
 class DebugScreen extends ConsumerWidget {
   const DebugScreen({super.key});
@@ -39,15 +40,13 @@ class DebugScreen extends ConsumerWidget {
           Text('Statut : $protoStatus'),
           const Divider(height: 32),
           Text(
-            'Export TV Time (GDPR)',
+            'Import TV Time',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           const Text(
-            'Format : fichier ZIP contenant les CSV de l\'export GDPR.\n'
-            'Séries : followed_tv_show.csv\n'
-            'Épisodes vus : tracking-prod-records-v2.csv (watch-episode), '
-            'tracking-prod-records.csv (watch), rewatched_episode.csv',
+            'Sélectionne le ZIP GDPR reçu de TV Time pour obtenir un résumé '
+            'exploitable : compteurs, erreurs, exemples et limites des champs.',
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -64,46 +63,12 @@ class DebugScreen extends ConsumerWidget {
             data: (result) {
               if (result == null) {
                 return const Text(
-                  'Aucun export chargé. Sélectionne le ZIP reçu de TV Time '
-                  '(dossier gdpr-data compressé).',
+                  'Aucun export chargé. Importe le ZIP GDPR de TV Time pour '
+                  'afficher le résumé.',
                 );
               }
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Séries suivies : ${result.shows.length}'),
-                  Text('Épisodes vus : ${result.watchedEpisodes.length}'),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Séries (10 premières)',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  ...result.shows
-                      .take(10)
-                      .map(
-                        (show) => Text(
-                          '• [${show.tvTimeId}] ${show.name}'
-                          '${show.episodesSeenCount != null ? ' — ${show.episodesSeenCount} ep. vus' : ''}',
-                        ),
-                      ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Épisodes vus (10 premiers)',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  ...result.watchedEpisodes
-                      .take(10)
-                      .map(
-                        (episode) => Text(
-                          '• ${episode.label}'
-                          '${episode.watchedAt != null ? ' — ${episode.watchedAt}' : ''}',
-                        ),
-                      ),
-                ],
-              );
+              return ImportSummaryView(result: result);
             },
             loading: () => const CircularProgressIndicator(),
             error: (error, _) => Text('Erreur import : $error'),

@@ -12,26 +12,45 @@ void main() {
   }
 
   final result = TvTimeGdprParser.parseFromDirectory(exportDir.path);
+  final summary = result.summary;
+  final report = summary.report;
 
-  stdout.writeln('=== Format export TV Time (GDPR) ===');
-  stdout.writeln('Dossier : ${exportDir.path}');
-  stdout.writeln('Fichiers CSV : ${exportDir.listSync().whereType<File>().length}');
-  stdout.writeln();
-  stdout.writeln('Séries suivies : ${result.shows.length}');
-  stdout.writeln('Épisodes vus   : ${result.watchedEpisodes.length}');
+  stdout.writeln('=== Résumé import TV Time (GDPR) ===');
+  stdout.writeln('Fichiers CSV : ${report.csvFileCount}');
+  stdout.writeln('Séries trouvées : ${summary.showCount}');
+  stdout.writeln('Épisodes vus : ${summary.watchedEpisodeCount}');
   stdout.writeln();
 
-  stdout.writeln('--- 5 premières séries ---');
-  for (final show in result.shows.take(5)) {
+  if (report.hasErrors) {
+    stdout.writeln('--- Erreurs ---');
+    for (final error in report.errors) {
+      stdout.writeln('  • $error');
+    }
+    stdout.writeln();
+  }
+
+  if (report.hasWarnings) {
+    stdout.writeln('--- Avertissements ---');
+    for (final warning in report.warnings) {
+      stdout.writeln('  • $warning');
+    }
+    stdout.writeln();
+  }
+
+  stdout.writeln('--- Champs / limites ---');
+  for (final note in summary.fieldNotes) {
+    stdout.writeln('  • $note');
+  }
+  stdout.writeln();
+
+  stdout.writeln('--- Exemples séries ---');
+  for (final show in summary.exampleShows) {
     stdout.writeln('  [${show.tvTimeId}] ${show.name}');
   }
 
   stdout.writeln();
-  stdout.writeln('--- 5 premiers épisodes vus ---');
-  for (final episode in result.watchedEpisodes.take(5)) {
-    stdout.writeln(
-      '  ${episode.showName} S${episode.seasonNumber}E${episode.episodeNumber}'
-      ' (ep_id=${episode.episodeId}, ${episode.watchedAt})',
-    );
+  stdout.writeln('--- Exemples épisodes ---');
+  for (final episode in summary.exampleEpisodes) {
+    stdout.writeln('  ${episode.label} (ep_id=${episode.episodeId})');
   }
 }
