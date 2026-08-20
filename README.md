@@ -4,6 +4,16 @@ A **Flutter technical prototype** exploring how to migrate personal viewing hist
 
 > **Status:** prototype / work in progress. This project was built to validate data import, matching and persistence strategies rather than to ship a finished consumer application.
 
+## Prototype preview
+
+### Imported library
+
+<p align="center">
+  <img src="docs/screenshots/shows.png" alt="Imported TV series library with TMDB posters and watch progress" width="380" />
+</p>
+
+The imported library combines TV Time viewing data with TMDB metadata and locally tracked episode progress.
+
 ## What it explores
 
 - Importing a **TV Time GDPR export** from local files
@@ -28,6 +38,24 @@ The project focuses more on data handling and application structure than visual 
 - Lightweight local persistence with `shared_preferences`
 - Environment-based API configuration
 - Unit tests around import parsing, matching, cache/persistence and metrics
+
+## More screenshots
+
+### Import diagnostics and scale estimates
+
+<p align="center">
+  <img src="docs/screenshots/import-summary.png" alt="TV Time import summary with parsing metrics, TMDB estimates and scalability diagnostics" width="420" />
+</p>
+
+The prototype exposes import metrics and rough scale estimates to make API, storage and processing trade-offs visible while experimenting with the migration pipeline.
+
+### Episode tracking
+
+<p align="center">
+  <img src="docs/screenshots/show-detail.png" alt="TV series detail screen with season progress and episode tracking" width="380" />
+</p>
+
+Series details combine TMDB metadata with imported and locally editable watch state.
 
 ## Project structure
 
