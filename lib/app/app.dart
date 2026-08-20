@@ -14,6 +14,7 @@ class TvTrackerApp extends ConsumerWidget {
       theme: AppTheme.light,
       initialRoute: AppRoutes.home,
       onGenerateRoute: onGenerateRoute,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
