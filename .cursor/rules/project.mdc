@@ -7,28 +7,44 @@ alwaysApply: true
 
 ## Objectif du projet
 
-Ce projet est un prototype technique privé d'une app Flutter permettant de tester :
-- l'import d'un export TV Time ;
+Ce projet est un prototype technique Flutter permettant d'explorer :
+- l'import et le parsing d'un export TV Time ;
 - le matching de séries avec TMDB ;
-- un tracker minimal de séries/épisodes ;
-- une première estimation des coûts si le projet scale.
+- un tracker léger de séries et d'épisodes ;
+- la persistance locale légère et le cache ;
+- des métriques autour de l'import et des appels API ;
+- une première réflexion sur les coûts et la scalabilité.
 
-Ce n'est pas encore une app finale.
+Le repository peut être public, mais ce n'est pas une application finale ni un produit lancé.
+
+## Scope actuel
+
+- Flutter mobile
+- Riverpod
+- Intégration TMDB existante
+- Import TV Time existant
+- Persistance locale légère existante
+- Pas d'authentification
+- Pas de backend
+- Pas de base de données locale tant qu'une tâche ne la justifie pas explicitement
+- UI fonctionnelle avant tout ; le polish visuel n'est pas prioritaire
 
 ## Règles générales
 
 - Garder le code simple, lisible et facile à modifier.
 - Ne pas sur-architecturer le projet.
-- Ne pas ajouter de backend, auth, base locale ou API TMDB tant que la tâche ne le demande pas explicitement.
+- Ne pas ajouter de backend, auth, base de données locale ou autre infrastructure sans besoin explicite.
 - Ne pas créer de features non demandées.
+- Considérer TMDB comme une intégration existante : préserver son isolation et sa configuration.
+- Ne jamais committer de clé API ou autre secret.
 - Privilégier des petits fichiers clairs plutôt que des gros fichiers fourre-tout.
 - Donner des noms explicites aux classes, fichiers, providers et méthodes.
-- Éviter le code magique ou trop abstrait.
-- Éviter les commentaires inutiles ; commenter seulement les décisions qui ne sont pas évidentes.
+- Éviter le code magique ou les abstractions trop génériques.
+- Éviter les commentaires inutiles ; commenter surtout les décisions qui ne sont pas évidentes.
 
 ## Architecture Flutter
 
-Utiliser une structure simple par feature :
+Utiliser une structure légère par feature :
 
 ```txt
 lib/
@@ -42,37 +58,48 @@ lib/
       data/
 ```
 
-Ne créer `application`, `domain` ou `data` que si la feature en a vraiment besoin.
+Ne créer `application`, `domain` ou `data` que si la feature en a réellement besoin.
 
-Pour le setup initial, `presentation` suffit.
+Les responsabilités communes et transverses doivent rester dans `core/`, sans y déplacer de logique métier spécifique à une feature.
 
 ## Riverpod
 
-* Utiliser `flutter_riverpod`.
-* Toujours lancer l'app avec `ProviderScope`.
-* Garder les providers proches de la feature concernée.
-* Éviter les global providers inutiles.
-* Utiliser des providers simples au début.
-* Ne pas introduire de génération de code Riverpod pour l'instant.
-* Ne pas utiliser `riverpod_annotation` sauf demande explicite.
+- Utiliser `flutter_riverpod`.
+- Toujours lancer l'app avec `ProviderScope`.
+- Garder les providers proches de la feature concernée.
+- Éviter les providers globaux inutiles.
+- Préférer des providers simples tant que le besoin ne justifie pas davantage d'abstraction.
+- Ne pas introduire de génération de code Riverpod sans besoin explicite.
+- Ne pas utiliser `riverpod_annotation` sauf si cela apporte une valeur claire au projet.
+
+## TMDB et configuration
+
+- `TMDB_API_KEY` doit rester configurée via l'environnement.
+- `.env` reste ignoré par Git.
+- `.env.example` documente uniquement le nom des variables, jamais leur valeur réelle.
+- Ne jamais hardcoder ni committer de clé API.
+- Garder les appels TMDB et la logique de matching testables et séparés de l'UI.
 
 ## UI
 
-* UI simple et fonctionnelle.
-* Material classique.
-* Pas de design final.
-* Pas d'animations ou polish visuel tant que le cœur technique n'est pas validé.
-* Chaque écran doit avoir un but clair.
+- UI simple et fonctionnelle.
+- Material classique tant qu'aucun besoin produit ne justifie autre chose.
+- Pas de design final nécessaire pour valider le cœur technique.
+- Pas d'animations ou de polish visuel au détriment de la logique métier.
+- Chaque écran doit avoir un but clair.
 
 ## Qualité du code
 
 Avant de considérer une tâche terminée :
 
-* le projet doit compiler ;
-* le code doit être formaté ;
-* les imports inutiles doivent être supprimés ;
-* les fichiers doivent rester courts et compréhensibles ;
-* aucune feature hors scope ne doit être ajoutée.
+- le projet doit compiler ;
+- `flutter analyze` doit passer ;
+- les tests concernés doivent passer ;
+- le code doit être formaté ;
+- les imports inutiles doivent être supprimés ;
+- les fichiers doivent rester courts et compréhensibles ;
+- les changements de logique d'import, matching, cache ou persistance doivent conserver ou ajouter des tests pertinents ;
+- aucune feature hors scope ne doit être ajoutée.
 
 ## Manière de travailler
 
@@ -80,7 +107,8 @@ Avant de considérer une tâche terminée :
 
 1. Lire les règles projet.
 2. Comprendre le scope exact.
-3. Proposer brièvement les fichiers à modifier.
-4. Faire uniquement ce qui est demandé.
-5. Résumer les changements à la fin.
-6. Indiquer la prochaine tâche logique.
+3. Identifier brièvement les fichiers à modifier.
+4. Faire uniquement ce qui est nécessaire.
+5. Vérifier analyse et tests pertinents.
+6. Résumer les changements à la fin.
+7. Indiquer la prochaine tâche logique si elle est utile.
